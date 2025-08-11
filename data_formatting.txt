@@ -1,0 +1,172 @@
+DATA FORMATTING FOR MULCO
+
+Part 0. Overview
+MulCo in its default state relies on a specific folder structure, downloaded with the model from GitHub. For the task of data input, pay attention to the following:
+	- Parent folder containing all MulCo python scripts (filepath . relative to MulCo_pipeline.py)
+	- The data subfolder (filepath ./data relative to MulCo_pipeline.py)
+
+To successfully process a dataset, MulCo requires the following seven files. Certain files may be provided as input invariables (and therefore may be located anywhere in the folder structure) while others require a specific name and location.
+
+All files discussed here use the python pickle encoding (.pkl format). Use the dump method from python module pickle and dump the data object into a file opened using binary formatting. For example, to save variable ‘data_object’ into file ‘data_object.pkl’, use the following code:
+	
+	with open("data_object.pkl","wb+") as data_object_file:
+		pickle.dump(data_object, data_object_file)
+
+The seven necessary files are as follows:
+1.	Processed data file
+2.	Event-pairs file
+3.	Test document file
+4.	Event-pairs mapping: this file must be located at data/event_map.pkl
+5.	Syntax graph file: must be located at ./syntax_graph.pkl
+6.	Time expression file: must be located at ./timex_dict.pkl
+7.	Temporal graph file: must be located at ./time_graph.pkl
+
+Before compiling your data, you should consider what counts a distinct document. Your data may already be split into distinct texts, or you may have to split the text into multiple ‘documents’ to be processed separately by the model.
+
+We next discuss the format of each file and how they will relate to your original dataset:
+
+
+Part 1. Processed data file
+
+The processed data file contains the bulk of the raw data from your dataset. It must be in the .pkl format. The data object encoded in the pickle file will be a nested dictionary, the exact levels discussed below:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Document-level dictionary: This dictionary contains the basic data associated with each document. The document dictionary must have the following exact keys: sents, events, and timexes. Each key is linked to a specific dictionary, detailed below:
+
+		1. Sentence dictionary (associated key: sents). The sentence dictionary stores all sentences from the original document. 
+
+			a. Key-value pairs are the index of the sentence in the original document, expressed in string format, and the full sentence.
+
+			b. All sentences should be clean—if annotations or xml markups exist within the raw dataset’s text, remove them. All that remains should be the semantic content of the sentence, to be passed through RoBERTa transformers.
+
+		2. Events dictionary (associated key: events). The event dictionary stores all events necessary to train and predict for event-pairs.
+
+			a. Key-value pairs are event identifier and tuple object describing event. Event identifiers must be unique on the document level, but does not have to be unique across the corpus.
+
+			b. Event tuple must fit the following format: (sentence index, word index, event text).
+
+				i. Sentence index is a string value identifying the sentence the event is located within. It must match the index given to the sentence in sents. Note that multi-sentence events are not possible using MulCo; it is assumed that all events are isolated to a single sentence in the document.
+
+				ii. Word index is a string value marking the first word within the sentence that belongs to the event text. Note that this indexing is specific to each sentence, and uses 1-index format—the first word in the sentence should have index ‘1’, the second ‘2’, and so on.
+
+				iii. Event text is the full string of the annotated event. If the event covers multiple words, include them all.
+
+		3. Timex dictionary (associated key: timexes). The timex dictionary stores annotations, if such exist, for explicit expressions of time within the text. This dictionary is only accessed if the time dictionary file is empty.
+
+			a. Key-value pairs are timex identifier and tuple object describing time expression. Timex identifiers, like event identifiers, must be unique on the document level but can repeat across corpus.
+
+			b. Timex tuple must fit the following format: (sentence index, word index, time expression object, time expression class value)
+
+				i. Sentence index is a string value identifying the sentence the time expression is located within. It must match the index given to the sentence in sents. Note that multi-sentence events are not possible using MulCo; it is assumed that all events are isolated to a single sentence in the document.
+
+				ii. Word index is a string value marking the first word within the sentence that belongs to the time expression text. Note that this indexing is specific to each sentence, and uses 1-index format—the first word in the sentence should have index ‘1’, the second ‘2’, and so on.
+
+				iii. Time expression object is the time expression as defined by the expression extraction tool used (ex. Stanza, HeidelTime, SUTime, STAGE).
+iv.	Time expression object is the object’s value in terms of MulCo classes defined in classes.py. If this value is not known, assign it None.
+
+
+Part 2. Event-pairs file
+
+The event-pairs file contains all the event-pairs which will be trained on or tested by the model. All pairs must be assembled using an ordered combination of two distinct events described in the processed data file. Events in question must be within the same document, but do not have to be in the same sentence.
+
+Note that an event-pairs file does not have to be comprehensive for each document. If an event-pair’s relationship is unknown, do not include it in the event-pairs file. The data object encoded in the pickle file will be a dictionary, the exact levels discussed below:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Document-level event-pairs list: This list of tuples contains the event-pairs to be used for each document. The tuples are formatted as follows:
+
+		1. Event tuple contains the following values: (event 1 identifier, event 2 identifier, relationship).
+
+			a. Event 1 and 2 identifiers must match the unique identifier given to the even in the processed data file. These identifiers must be intentionally ordered—an event-pair of ‘event 1, event 2’ is not the same as ‘event 2, event 1’.
+
+			b. The relationship between two events must be one of the following labels: b, a, i, ii, s, formatted as strings. (It is possible to also include the label v, but you will have to re-add it to the MulCo pipeline.) These labels correspond to the following event-pair relationships:
+
+				i. b: Event 1 takes place and fully concludes before Event 2 begins on a timeline.
+				ii. a: Event 2 takes place and fully concludes before Event 1 begins on a timeline.
+				iii. i: Event 1 begins before Event 2 begins on a timeline, but ends after Event 2 starts.
+				iv. ii: Event 2 begins before Event 1 begins on a timeline, but ends after Event 1 starts.
+				v. s: Events 1 and 2 start at the same time and also end at the same time.
+				vi. v: This is a miscellany category, for when the relationship between events is unclear to a human annotator. We recommend not keeping it, as it encourages the model to avoid making meaningful predictions.
+
+
+Part 3. Test-pairs file
+
+The test-pairs file contains all the event-pairs which will be tested specifically by the model. Note that, to be considered a ‘testing pair’ by the pipeline, the event-pair must be in this file and must belong to a document that designated in the MulCo pipeline code as a testing document (see Part 8). All event-pairs in this document must also be listed in the event-pairs file, with their true relationship label.
+
+The data object encoded in the pickle file will be a dictionary, the exact levels discussed below:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Document-level event-pairs list: This list of tuples contains the event-pairs to be used for testing for each document. The tuples are formatted as follows:
+
+		1. Event tuple contains the following values: (event 1 identifier, event 2 identifier, empty string).
+
+			a. Event 1 and 2 identifiers must match the unique identifier given to the even in the processed data file. These identifiers must be intentionally ordered—an event-pair of ‘event 1, event 2’ is not the same as ‘event 2, event 1’.
+
+			b. Unlike the event-pairs file, the testing-pairs file does not contain the true relationship between events 1 and 2. The pipeline will cross-reference against the event-pairs file for testing. Any value assigned to empty string will be ignored by the pipeline, but it does expect three values in the tuple. We recommend a literal empty string ‘’.
+
+
+Part 4. Event-map file
+
+In some cases, TEO/ETRE corpora are assembled by combining two annotations of the same dataset. (This is the case for most TimeBank-based corpora like TBDense, MATRES, and TDDiscourse). In this scenario, the event identifiers given in one annotation do not match identifiers in the second. This is not always the case. The event-map file is still required by MulCo, and must be placed in folder ./data. Format is as follows:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Event-level dictionary. This dictionary maps event identifiers in one schema to the other. All events must have a unique identifier in both schemas.
+
+	1. If you have two identifier schemas (key, value) is the event’s identifier in one schema and the event’s identifier in the next.
+
+	2. If you have only one identifier schema, for (key, value) create a key-value pair for each identifier where the identifier is both key and value.
+
+
+Part 5. Syntax graph file
+
+The syntax graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the syntactic_graph.py helper function within the main MulCo files. syntactic_graph.py takes the processed data file as input and should be directed to output to a file of name syntax_graph.py. The shape of the graph per each document is as follows:
+
+I. Top-level document node: edges connect document node to sentence nodes
+
+	A. Sentence-level nodes: pulled directly from the sentence dictionary in processed data file. Edges connect sentence nodes to word nodes.
+
+		1. Word-level nodes: also pulled from sentence dictionary. Edges connect words to each other based on grammatical relations as identified by SpaCy English corpus.
+This file cannot be left blank, and must contain a dictionary of graph objects, with nodes for every sentence and word in every document in order for MulCo training to proceed without error. Do not try to manually create this file.
+
+
+Part 6. Time expression file
+
+The time expression file captures “time expressions” within a text for use in the temporal graph. Time expressions are isolated phrases which capture explicit temporal communication (ex. “three days ago”, “not since September”, “tomorrow”). The level of granularity of the time expression will depend on what time expression extractor is being used. Options include Stanza, HeidelTime, SUTime, and STAGE.
+
+This file can be left ‘blank’. If this file is blank but time expressions have been used in the processed data file, those expressions will be used to generate the temporal graph file. If neither dictionary is populated, the resulting semantic graph file will contain no data but will be usable by MulCo.
+
+If you manually create a blank time expression file, it must contain a dictionary of the following format:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Empty dictionary.
+
+To create a populated time expression file, it must be formatted with the following:
+
+I. Corpus-level dictionary. The key on this dictionary level is the unique document identifier for the document in the document. Make sure this identifier is used consistently across other data files. The value of each key is the following:
+
+	A. Document-level dictionary. The key on this dictionary level is a unique timex identifier for each time expression. Timex identifiers only need to be unique per document, and can overlap with timex identifiers used in the processed data file (if this dictionary is populated, all timexes in the processed data file are fully ignored). The value of each entry is the following:
+
+		1. A MulCo time expression class object. These objects can be converted from other types of time expressions but must directly use the definitions laid out in MulCo’s classes.py file to function without error. The object encodes multi-layered temporal semantic information.
+
+
+Part 7. Temporal graph file
+
+The semantic/temporal graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the semantic_graph.py helper function within the main MulCo files. semantic_graph.py takes the processed data file and time dictionary file as input and should be directed to output to a file of name time_graph.py.
+
+The shape of the graph per each document is as follows:
+
+I. Top-level document node: edges connect document node to timex nodes
+
+	A. Timex-level nodes: pulled directly from the time dictionary in processed data file. Edges connect timexes to each other based on ordering of their associated dates.
+This file cannot be left ‘blank’ and must contain a dictionary of graph objects. Do not try to manually create this file.
+
+
+Part 8. MulCo pipeline hard-coded variables
+
+Note that the MulCo pipeline currently uses certain hard-coded variables within MulCo_pipeline.py to designate model behavior. Starting from line 245, you should modify variables "test_files" and "dev_files" to contain the unique document identifiers for the data you wish to use as held-back test and development files. Without changing these variables, the model will default to TimeBank file names. The variable "rel_dict" defines which labels the model attempts to build classifiers for, and is currently configured to adapt to different TimeBank corpora. You may need to change this variable if your dataset requires different labels.
+
+Otherwise, the file takes input as described at in Part 0, and can process any dataset that has been formatted appropriately.
