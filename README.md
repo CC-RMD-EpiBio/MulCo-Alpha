@@ -1,30 +1,30 @@
 # MulCo-legacy
-# This directory contains the source code of MulCo implementation (alpha version), published in Conference on Information and Knowledge Management (read paper at https://dl.acm.org/doi/abs/10.1145/3627673.3679520).
+This directory contains the source code of MulCo implementation (alpha version), published in Conference on Information and Knowledge Management (read paper at https://dl.acm.org/doi/abs/10.1145/3627673.3679520).
 
-# This research was supported in part by the Intramural Research Program of the National Institutes of Health (NIH). The contributions of the NIH author(s) were made as part of their official duties as NIH federal employees, are in compliance with agency policy requirements, and are considered Works of the United States Government. However, the findings and conclusions presented in this paper are those of the author(s) and do not necessarily reflect the views of the NIH or the U.S. Department of Health and Human Services.
+This research was supported in part by the Intramural Research Program of the National Institutes of Health (NIH). The contributions of the NIH author(s) were made as part of their official duties as NIH federal employees, are in compliance with agency policy requirements, and are considered Works of the United States Government. However, the findings and conclusions presented in this paper are those of the author(s) and do not necessarily reflect the views of the NIH or the U.S. Department of Health and Human Services.
 
 # Required python package:
-# 1. torch
-# 2. transformers
-# 3. numpy
-# 4. networkx
-# 5. tqdm
-# 6. spacy
-# Please install all of them via conda manager.
+1. torch
+2. transformers
+3. numpy
+4. networkx
+5. tqdm
+6. spacy
+Please install all of them via conda manager.
 
-# This is pure CUDA implementation. To run on CPU, simply remove all .cuda() statements for all variables.
-# Be aware, this is running on DGX-A100 8-GPU Server. As we tested, each single GPU runs differently. However, we do our best to select seeds that are stable to reproduce the experiment.
-# Adjusting the gradient accumulation_steps argument if GPU memory is not sufficient. Generally, it requires at least 24GB GPU memory to run.
+This is pure CUDA implementation. To run on CPU, simply remove all .cuda() statements for all variables.
+Be aware, this is running on DGX-A100 8-GPU Server. As we tested, each single GPU runs differently. However, we do our best to select seeds that are stable to reproduce the experiment.
+Adjusting the gradient accumulation_steps argument if GPU memory is not sufficient. Generally, it requires at least 24GB GPU memory to run.
 
-# The source code has been tested and successfully run on the following GPUs: 
-# 1. GTX 1080 Ti - 11GB (Require very small batch size with accumulation_steps)
-# 2. RTX 2080 Ti - 11GB (Require very small batch size with accumulation_steps)
-# 3. RTX 3090 - 24GB
-# 4. RTX A6000 - 48 GB
-# 5. DGX-Station Tesla V100 - 32GB
-# 6. DGX-A100 A100 - 40GB
+The source code has been tested and successfully run on the following GPUs: 
+1. GTX 1080 Ti - 11GB (Require very small batch size with accumulation_steps)
+2. RTX 2080 Ti - 11GB (Require very small batch size with accumulation_steps)
+3. RTX 3090 - 24GB
+4. RTX A6000 - 48 GB
+5. DGX-Station Tesla V100 - 32GB
+6. DGX-A100 A100 - 40GB
 
-# MulCo-formatted data in this repository taken from public datasets TimeBankDense (https://www.usna.edu/Users/cs/nchamber/caevo/#corpus), TDDiscourse (https://github.com/aakanksha19/TDDiscourse), and MATRES (https://github.com/qiangning/MATRES). See "data_formatting.txt" for instructions on formatting new data sources for MulCo.
+MulCo-formatted data in this repository taken from public datasets TimeBankDense (https://www.usna.edu/Users/cs/nchamber/caevo/#corpus), TDDiscourse (https://github.com/aakanksha19/TDDiscourse), and MATRES (https://github.com/qiangning/MATRES). See "data_formatting.txt" for instructions on formatting new data sources for MulCo.
 
 # Sample running commands
 # TDDMan
