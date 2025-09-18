@@ -122,7 +122,7 @@ I. Corpus-level dictionary. The key on this dictionary level is the unique docum
 
 Part 5. Syntax graph file
 
-The syntax graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the syntactic_graph.py helper function within the main MulCo files. syntactic_graph.py takes the processed data file as input and should be directed to output to a file of name syntax_graph.py. The shape of the graph per each document is as follows:
+The syntax graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the syntactic_graph.py helper function within the main MulCo files. syntactic_graph.py takes the processed data file as input and should be directed to output to a file of name syntax_graph.pkl. The shape of the graph per each document is as follows:
 
 I. Top-level document node: edges connect document node to sentence nodes
 
@@ -155,7 +155,7 @@ I. Corpus-level dictionary. The key on this dictionary level is the unique docum
 
 Part 7. Temporal graph file
 
-The semantic/temporal graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the semantic_graph.py helper function within the main MulCo files. semantic_graph.py takes the processed data file and time dictionary file as input and should be directed to output to a file of name time_graph.py.
+The semantic/temporal graph file contains a graph object necessarily for MulCo function. We will describe the shape of the graph for troubleshooting purposes, but this graph should be auto-generated using the semantic_graph.py helper function within the main MulCo files. semantic_graph.py takes the processed data file and time dictionary file as input and should be directed to output to a file of name time_graph.pkl.
 
 The shape of the graph per each document is as follows:
 
@@ -168,5 +168,6 @@ This file cannot be left ‘blank’ and must contain a dictionary of graph obje
 Part 8. MulCo pipeline hard-coded variables
 
 Note that the MulCo pipeline currently uses certain hard-coded variables within MulCo_pipeline.py to designate model behavior. Starting from line 245, you should modify variables "test_files" and "dev_files" to contain the unique document identifiers for the data you wish to use as held-back test and development files. Without changing these variables, the model will default to TimeBank file names. The variable "rel_dict" defines which labels the model attempts to build classifiers for, and is currently configured to adapt to different TimeBank corpora. You may need to change this variable if your dataset requires different labels.
+
 
 Otherwise, the file takes input as described at in Part 0, and can process any dataset that has been formatted appropriately.
